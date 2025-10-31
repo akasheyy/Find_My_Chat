@@ -38,6 +38,12 @@ const Auth = () => {
         title: "Success!",
         description: "Account created successfully. You can now sign in.",
       });
+      // Request notification permission after successful sign up
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+      }
     }
 
     setLoading(false);
@@ -59,6 +65,12 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
+      // Request notification permission after successful sign in
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+      }
       navigate("/chat");
     }
 
