@@ -1,0 +1,2 @@
+- [x] Replace MessageCircle icon with fmc_logo.png image in src/pages/Index.tsx
+- [x] Add favicon link to /fmc_logo.png in index.html
