@@ -117,13 +117,17 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
       new Notification(`New message from ${selectedUserEmail}`, {
         body: message.content,
         icon: "/fmc_logo.png",
+        tag: "chat-message", // Prevent duplicate notifications
+        requireInteraction: false, // Auto-dismiss after a few seconds
       });
-    } else if (Notification.permission !== "denied") {
+    } else if (Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
           new Notification(`New message from ${selectedUserEmail}`, {
             body: message.content,
             icon: "/fmc_logo.png",
+            tag: "chat-message",
+            requireInteraction: false,
           });
         }
       });

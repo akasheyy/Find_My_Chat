@@ -39,10 +39,8 @@ const Auth = () => {
         description: "Account created successfully. You can now sign in.",
       });
       // Request notification permission after successful sign up
-      if ("Notification" in window) {
-        if (Notification.permission === "default") {
-          await Notification.requestPermission();
-        }
+      if ("Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
       }
     }
 
@@ -66,10 +64,8 @@ const Auth = () => {
       });
     } else {
       // Request notification permission after successful sign in
-      if ("Notification" in window) {
-        if (Notification.permission === "default") {
-          await Notification.requestPermission();
-        }
+      if ("Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
       }
       navigate("/chat");
     }
