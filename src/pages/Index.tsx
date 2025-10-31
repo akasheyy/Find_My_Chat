@@ -34,7 +34,7 @@ const Index = () => {
           </p>
 
           <div className="text-sm text-muted-foreground">
-Version 1.2.1
+Version 1.2.1.1
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">

@@ -13,6 +13,14 @@ interface Profile {
   username: string | null;
 }
 
+interface LastMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  sender_id: string;
+  receiver_id: string;
+}
+
 interface PresenceState {
   user_id: string;
   online_at: string;
@@ -29,6 +37,7 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
   const [users, setUsers] = useState<Profile[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [lastMessages, setLastMessages] = useState<Record<string, LastMessage>>({});
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -41,6 +50,24 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
 
       if (!error && data) {
         setUsers(data);
+
+        // Fetch last messages for each user
+        const lastMessagesData: Record<string, LastMessage> = {};
+        for (const user of data) {
+          const { data: messages } = await supabase
+            .from("messages")
+            .select("*")
+            .or(
+              `and(sender_id.eq.${currentUserId},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${currentUserId})`
+            )
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (messages && messages.length > 0) {
+            lastMessagesData[user.id] = messages[0];
+          }
+        }
+        setLastMessages(lastMessagesData);
       }
     };
 
@@ -58,6 +85,29 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
         },
         () => {
           fetchUsers();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to new messages to update last messages
+    const messageChannel = supabase
+      .channel("last-messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const newMsg = payload.new as LastMessage;
+          if (newMsg.sender_id === currentUserId || newMsg.receiver_id === currentUserId) {
+            const otherUserId = newMsg.sender_id === currentUserId ? newMsg.receiver_id : newMsg.sender_id;
+            setLastMessages((prev) => ({
+              ...prev,
+              [otherUserId]: newMsg,
+            }));
+          }
         }
       )
       .subscribe();
@@ -111,15 +161,27 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
 
     return () => {
       supabase.removeChannel(profileChannel);
+      supabase.removeChannel(messageChannel);
       supabase.removeChannel(presenceChannel);
     };
   }, [currentUserId]);
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aLastMessage = lastMessages[a.id];
+      const bLastMessage = lastMessages[b.id];
+
+      if (!aLastMessage && !bLastMessage) return 0;
+      if (!aLastMessage) return 1;
+      if (!bLastMessage) return -1;
+
+      return new Date(bLastMessage.created_at).getTime() - new Date(aLastMessage.created_at).getTime();
+    });
 
   if (!isVisible && isMobile) {
     return null;
@@ -171,7 +233,11 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
                       {user.username || user.email.split("@")[0]}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
+                      {lastMessages[user.id]
+                        ? lastMessages[user.id].content.length > 30
+                          ? `${lastMessages[user.id].content.substring(0, 30)}...`
+                          : lastMessages[user.id].content
+                        : user.email}
                     </p>
                   </div>
                 </div>

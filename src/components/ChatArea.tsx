@@ -117,8 +117,9 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
       new Notification(`New message from ${selectedUserEmail}`, {
         body: message.content,
         icon: "/fmc_logo.png",
-        tag: "chat-message", // Prevent duplicate notifications
+        tag: `chat-message-${message.sender_id}`, // Unique tag per sender to prevent duplicate notifications
         requireInteraction: false, // Auto-dismiss after a few seconds
+        silent: false, // Ensure sound/notification is played
       });
     } else if (Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
@@ -126,8 +127,9 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
           new Notification(`New message from ${selectedUserEmail}`, {
             body: message.content,
             icon: "/fmc_logo.png",
-            tag: "chat-message",
+            tag: `chat-message-${message.sender_id}`,
             requireInteraction: false,
+            silent: false,
           });
         }
       });
