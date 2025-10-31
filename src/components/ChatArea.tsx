@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!selectedUserId) {
@@ -83,6 +85,11 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
             (newMsg.sender_id === selectedUserId && newMsg.receiver_id === currentUserId)
           ) {
             setMessages((prev) => [...prev, newMsg]);
+
+            // Show notification for incoming messages (not from current user)
+            if (newMsg.sender_id !== currentUserId && selectedUserId !== newMsg.sender_id) {
+              showNotification(newMsg);
+            }
           }
         }
       )
@@ -100,9 +107,32 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
     }
   }, [messages]);
 
+  const showNotification = (message: Message) => {
+    if (!("Notification" in window)) {
+      console.log("This browser does not support desktop notification");
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      new Notification(`New message from ${selectedUserEmail}`, {
+        body: message.content,
+        icon: "/fmc_logo.png",
+      });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification(`New message from ${selectedUserEmail}`, {
+            body: message.content,
+            icon: "/fmc_logo.png",
+          });
+        }
+      });
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() || !selectedUserId) return;
 
     setSending(true);
@@ -145,7 +175,7 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
+    <div className={`flex-1 flex flex-col bg-background ${isMobile ? 'w-full' : ''}`}>
       <div className="border-b border-border bg-card px-6 py-4">
         <h2 className="font-semibold">{selectedUserEmail}</h2>
       </div>

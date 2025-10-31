@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Search, Circle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Profile {
   id: string;
@@ -21,12 +22,14 @@ interface UserListProps {
   currentUserId: string;
   selectedUserId: string | null;
   onSelectUser: (userId: string) => void;
+  isVisible?: boolean;
 }
 
-const UserList = ({ currentUserId, selectedUserId, onSelectUser }: UserListProps) => {
+const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = true }: UserListProps) => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Fetch all users
@@ -118,8 +121,12 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser }: UserListProps
       user.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (!isVisible && isMobile) {
+    return null;
+  }
+
   return (
-    <div className="w-80 border-r border-border bg-card flex flex-col">
+    <div className={`${isMobile ? 'w-full' : 'w-80'} border-r border-border bg-card flex flex-col ${isMobile ? 'absolute inset-y-0 left-0 z-10' : ''}`}>
       <div className="p-4 border-b border-border">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

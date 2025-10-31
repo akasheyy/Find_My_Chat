@@ -1,2 +1,7 @@
-- [x] Replace MessageCircle icon with fmc_logo.png image in src/pages/Index.tsx
-- [x] Add favicon link to /fmc_logo.png in index.html
+- [x] Update package.json version to "1.2"
+- [x] Modify src/components/UserList.tsx to be responsive: hide on mobile by default, add toggle functionality
+- [x] Update src/pages/Chat.tsx to handle mobile layout with UserList toggle button
+- [x] Add browser notification logic in src/components/ChatArea.tsx for incoming messages
+- [x] Test mobile responsiveness
+- [x] Verify notifications work
+- [x] Build app to confirm version update
