@@ -59,7 +59,7 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
         .or(
           `and(sender_id.eq.${currentUserId},receiver_id.eq.${selectedUserId}),and(sender_id.eq.${selectedUserId},receiver_id.eq.${currentUserId})`
         )
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (!error && data) {
         setMessages(data);
