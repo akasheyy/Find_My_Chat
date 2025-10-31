@@ -27,11 +27,15 @@ const Index = () => {
           <h1 className="text-5xl font-bold tracking-tight">
             Welcome to ChatConnect
           </h1>
-          
+
           <p className="text-xl text-muted-foreground">
             Connect and chat with people in real-time. See who's online, send messages,
             and build meaningful connections.
           </p>
+
+          <div className="text-sm text-muted-foreground">
+            Version 1.2.01
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button size="lg" onClick={() => navigate("/auth")}>

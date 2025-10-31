@@ -3,6 +3,7 @@
 - [x] Update src/pages/Chat.tsx to handle mobile layout with UserList toggle button
 - [x] Add browser notification logic in src/components/ChatArea.tsx for incoming messages
 - [x] Fix notification logic to trigger for all incoming messages from other users
+- [x] Add version display on Index page
 - [x] Test mobile responsiveness
 - [x] Verify notifications work
 - [x] Build app to confirm version update
