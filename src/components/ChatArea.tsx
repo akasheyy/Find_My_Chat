@@ -87,7 +87,7 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
             setMessages((prev) => [...prev, newMsg]);
 
             // Show notification for incoming messages (not from current user)
-            if (newMsg.sender_id !== currentUserId && selectedUserId !== newMsg.sender_id) {
+            if (newMsg.sender_id !== currentUserId) {
               showNotification(newMsg);
             }
           }
