@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Circle } from "lucide-react";
+import { Search, Circle, UserPlus, UserMinus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
   email: string;
   username: string | null;
+  user_id: string;
 }
 
 interface LastMessage {
@@ -38,7 +41,9 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [lastMessages, setLastMessages] = useState<Record<string, LastMessage>>({});
+  const [following, setFollowing] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Fetch all users
@@ -73,6 +78,20 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
 
     fetchUsers();
 
+    // Fetch following status
+    const fetchFollowing = async () => {
+      const { data, error } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", currentUserId);
+
+      if (!error && data) {
+        setFollowing(new Set(data.map(f => f.following_id)));
+      }
+    };
+
+    fetchFollowing();
+
     // Subscribe to profile changes
     const profileChannel = supabase
       .channel("profile-changes")
@@ -85,6 +104,22 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
         },
         () => {
           fetchUsers();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to follows changes
+    const followsChannel = supabase
+      .channel("follows-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "follows",
+        },
+        () => {
+          fetchFollowing();
         }
       )
       .subscribe();
@@ -161,16 +196,64 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
 
     return () => {
       supabase.removeChannel(profileChannel);
+      supabase.removeChannel(followsChannel);
       supabase.removeChannel(messageChannel);
       supabase.removeChannel(presenceChannel);
     };
   }, [currentUserId]);
 
+  const handleFollow = async (userId: string, isCurrentlyFollowing: boolean) => {
+    try {
+      if (isCurrentlyFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", userId);
+
+        if (error) throw error;
+        setFollowing(prev => {
+          const next = new Set(prev);
+          next.delete(userId);
+          return next;
+        });
+        toast({
+          title: "Unfollowed",
+          description: "You have unfollowed this user",
+        });
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from("follows")
+          .insert({
+            follower_id: currentUserId,
+            following_id: userId,
+          });
+
+        if (error) throw error;
+        setFollowing(prev => new Set([...prev, userId]));
+        toast({
+          title: "Following",
+          description: "You are now following this user",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users
     .filter(
       (user) =>
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.username?.toLowerCase().includes(searchQuery.toLowerCase())
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.user_id?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       const aLastMessage = lastMessages[a.id];
@@ -206,6 +289,7 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
           {filteredUsers.map((user) => {
             const isOnline = onlineUsers.has(user.id);
             const isSelected = selectedUserId === user.id;
+            const isFollowing = following.has(user.id);
 
             return (
               <Card
@@ -233,6 +317,9 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
                       {user.username || user.email.split("@")[0]}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
+                      {user.user_id}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {lastMessages[user.id]
                         ? lastMessages[user.id].content.length > 30
                           ? `${lastMessages[user.id].content.substring(0, 30)}...`
@@ -240,6 +327,21 @@ const UserList = ({ currentUserId, selectedUserId, onSelectUser, isVisible = tru
                         : user.email}
                     </p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFollow(user.id, isFollowing);
+                    }}
+                    className="ml-2"
+                  >
+                    {isFollowing ? (
+                      <UserMinus className="w-4 h-4" />
+                    ) : (
+                      <UserPlus className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
               </Card>
             );

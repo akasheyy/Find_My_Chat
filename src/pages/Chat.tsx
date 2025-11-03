@@ -6,7 +6,7 @@ import UserList from "@/components/UserList";
 import ChatArea from "@/components/ChatArea";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { LogOut, Users } from "lucide-react";
+import { LogOut, Users, User as UserIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Chat = () => {
@@ -62,6 +62,12 @@ const Chat = () => {
     }
   };
 
+  const handleViewProfile = () => {
+    if (user) {
+      navigate(`/profile/${user.id}`);
+    }
+  };
+
   if (!user) {
     return null;
   }
@@ -87,10 +93,16 @@ const Chat = () => {
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleSignOut}>
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleViewProfile}>
+            <UserIcon className="w-4 h-4 mr-2" />
+            Profile
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
