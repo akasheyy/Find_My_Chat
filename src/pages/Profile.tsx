@@ -131,7 +131,10 @@ export default function Profile() {
           .eq('follower_id', currentUserId)
           .eq('following_id', profile.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Unfollow error:', error);
+          throw error;
+        }
         setIsFollowing(false);
         setFollowStats(prev => ({ ...prev, followers: prev.followers - 1 }));
         toast({
@@ -147,7 +150,10 @@ export default function Profile() {
             following_id: profile.id,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Follow error:', error);
+          throw error;
+        }
         setIsFollowing(true);
         setFollowStats(prev => ({ ...prev, followers: prev.followers + 1 }));
         toast({
@@ -155,11 +161,11 @@ export default function Profile() {
           description: `You are now following ${profile.username || profile.user_id}`,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating follow status:', error);
       toast({
         title: "Error",
-        description: "Failed to update follow status",
+        description: `Failed to update follow status: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     }
