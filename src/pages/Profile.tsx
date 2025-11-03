@@ -51,7 +51,7 @@ export default function Profile() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', id)
+        .eq('id', id)
         .single();
 
       if (error) throw error;
@@ -63,21 +63,14 @@ export default function Profile() {
         description: "Failed to load profile",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadFollowStats = async (id: string) => {
     try {
-      // Get profile ID from user_id
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', id)
-        .single();
-
-      if (!profileData) return;
-
-      const profileId = profileData.id;
+      const profileId = id;
 
       // Get followers count
       const { count: followersCount } = await supabase
@@ -104,19 +97,11 @@ export default function Profile() {
     if (!currentUserId) return;
 
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', id)
-        .single();
-
-      if (!profileData) return;
-
       const { data } = await supabase
         .from('follows')
         .select('*')
         .eq('follower_id', currentUserId)
-        .eq('following_id', profileData.id)
+        .eq('following_id', id)
         .single();
 
       setIsFollowing(!!data);
@@ -173,7 +158,7 @@ export default function Profile() {
 
   const handleMessage = () => {
     if (profile) {
-      navigate(`/chat/${profile.id}`);
+      navigate(`/chat`);
     }
   };
 
