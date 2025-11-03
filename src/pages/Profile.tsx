@@ -33,13 +33,18 @@ export default function Profile() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    getCurrentUser();
-    if (userId) {
-      loadProfile(userId);
-      loadFollowStats(userId);
-      checkFollowStatus(userId);
-    }
-  }, [userId]);
+    const initializeProfile = async () => {
+      await getCurrentUser();
+      if (userId) {
+        loadProfile(userId);
+        loadFollowStats(userId);
+        if (currentUserId) {
+          checkFollowStatus(userId);
+        }
+      }
+    };
+    initializeProfile();
+  }, [userId, currentUserId]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -97,16 +102,20 @@ export default function Profile() {
     if (!currentUserId) return;
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('follows')
         .select('*')
         .eq('follower_id', currentUserId)
         .eq('following_id', id)
         .single();
 
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking follow status:', error);
+      }
       setIsFollowing(!!data);
     } catch (error) {
-      // Not following
+      console.error('Error checking follow status:', error);
+      setIsFollowing(false);
     }
   };
 
