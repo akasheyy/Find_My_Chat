@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Users, MessageSquare, Heart } from "lucide-react";
+import { User, Users, MessageSquare, Heart, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileData {
@@ -177,6 +177,19 @@ export default function Profile() {
     }
   };
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      navigate("/auth");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -232,6 +245,19 @@ export default function Profile() {
             <div className="text-center text-sm text-gray-600">
               Member since {new Date(profile.created_at).toLocaleDateString()}
             </div>
+
+            {isOwnProfile && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </Button>
+              </div>
+            )}
 
             {!isOwnProfile && (
               <div className="flex justify-center space-x-4">
