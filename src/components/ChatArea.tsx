@@ -127,6 +127,7 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
           table: "message_reactions",
         },
         (payload) => {
+          // Refresh reactions for current messages
           fetchReactions(messages.map(m => m.id));
         }
       )
@@ -142,6 +143,13 @@ const ChatArea = ({ currentUserId, selectedUserId }: ChatAreaProps) => {
     // Scroll to bottom when messages change
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Fetch reactions whenever messages change
+    if (messages.length > 0) {
+      fetchReactions(messages.map(m => m.id));
     }
   }, [messages]);
 
